@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>cimilre 유두 사이즈 가이드</title>
+    
+    <link rel="stylesheet" href="https://printjs-401cc.kxcdn.com/print.min.css">
+    <script src="https://printjs-401cc.kxcdn.com/print.min.js"></script>
+
     <style>
         body {
             margin: 0;
@@ -31,12 +35,6 @@
         .clickable-img:active {
             transform: scale(0.98);
         }
-        .loading-text {
-            display: none;
-            color: #007aff;
-            font-weight: bold;
-            margin-top: 15px;
-        }
     </style>
 </head>
 <body>
@@ -47,87 +45,25 @@
         
         <img src="https://damipapa.github.io/test/dual%20max.jpg" 
              class="clickable-img" 
-             onclick="directPdfPrint('https://damipapa.github.io/test/guide.pdf')">
-             
-        <div id="loading" class="loading-text">인쇄 데이터를 생성 중입니다...</div>
+             onclick="startPerfectPrint()">
     </div>
 
     <script>
-        async function directPdfPrint(imgUrl) {
-            const loading = document.getElementById('loading');
-            loading.style.display = 'block';
+        function startPerfectPrint() {
+            // 실제 인쇄할 고화질/실측 원본 이미지 주소
+            const realPrintImgSrc = "https://damipapa.github.io/test/guide.jpg";
 
-            try {
-                // 1. 인쇄용 원본 이미지를 바이너리(Blob) 데이터로 가져옵니다.
-                const response = await fetch(imgUrl);
-                const blob = await response.blob();
+            // printJS 라이브러리를 실행하여 모바일 사파리 엔진에 직접 주입합니다.
+            printJS({
+                printable: realPrintImgSrc, // 인쇄할 이미지 경로
+                type: 'image',              // 타겟 타입은 이미지
+                style: '@page { size: A4 portrait; margin: 0mm; } body { margin: 0; } img { width: 100%; height: auto; }', 
+                // ↑ 여백을 0으로 만들어 모바일 축소를 방지하는 특수 CSS 주입
                 
-                // 2. 이미지를 base64 문장으로 변환합니다.
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = function () {
-                    const base64data = reader.result.split(',')[1];
-                    
-                    // 3. 가로 210mm, 세로 297mm (A4 규격) 규격의 PDF로 강제
-                    // 여백을 0으로 강제 고정하여 모바일 인쇄시 임의 축소 차단
-                    const pdfContent = `%PDF-1.4
-1 0 obj <</Type/Catalog/Pages 2 0 R>> endobj
-2 0 obj <</Type/Pages/Kids[3 0 R]/Count 1>> endobj
-3 0 obj <</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents 4 0 R/Resources<</XObject<</Img1 5 0 R>>>>>> endobj
-4 0 obj <</Length 25>> stream
-595 0 0 842 0 0 cm /Img1 Do
-endstream
-endobj
-5 0 obj <</Type/XObject/Subtype/Image/Width 794/Height 1123/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${base64data.length}>> stream
-${atob(base64data)}
-endstream
-endobj
-xref
-0 6
-0000000000 65535 f 
-0000000009 00000 n 
-0000000056 00000 n 
-0000000111 00000 n 
-0000000212 00000 n 
-0000000287 00000 n 
-trailer <</Size 6/Root 1 0 R>>
-startxref
-${287 + 115 + base64data.length}
-%%EOF`;
-
-                    // 4. 조립된 코드를 실제 PDF 파일 객체로 만듭니다.
-                    const pdfBlob = new Blob([pdfContent], { type: 'application/pdf' });
-                    const pdfUrl = URL.createObjectURL(pdfBlob);
-
-                    // 5. 숨겨진 iframe을 만들어 PDF를 주입하고 프린트를 강제 명령합니다.
-                    const oldFrame = document.getElementById('pdf-print-frame');
-                    if (oldFrame) oldFrame.remove();
-
-                    const iframe = document.createElement('iframe');
-                    iframe.id = 'pdf-print-frame';
-                    iframe.style.position = 'fixed';
-                    iframe.style.width = '0';
-                    iframe.style.height = '0';
-                    iframe.style.border = '0';
-                    iframe.src = pdfUrl;
-                    
-                    document.body.appendChild(iframe);
-
-                    // 6. PDF가 iframe 내부에 안착하면 바로 프린트 창 돌입
-                    iframe.onload = function() {
-                        setTimeout(() => {
-                            iframe.contentWindow.focus();
-                            iframe.contentWindow.print();
-                            loading.style.display = 'none';
-                        }, 300);
-                    };
-                };
-
-            } catch (error) {
-                console.error(error);
-                loading.style.display = 'none';
-                alert("실측 인쇄 데이터 생성 중 오류가 발생했습니다. 동일 서버 내의 이미지를 사용해 주세요.");
-            }
+                documentTitle: '계측 가이드', // 문서 제목
+                showModal: true,            // 모바일에서 로딩 중일 때 인디케이터 표시
+                modalMessage: '인쇄 화면을 준비 중입니다...'
+            });
         }
     </script>
 
