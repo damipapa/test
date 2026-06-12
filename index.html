@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>cimilre 유두 사이즈 가이드</title>
     <style>
-        /* 기본 웹사이트 스타일 */
+        /* 1. 일반 웹 화면 스타일 */
         body {
             margin: 0;
             padding: 20px;
@@ -20,85 +20,72 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        /* 🖨️ 인쇄할 때의 전용 스타일 설정 */
+        /* 평소에는 인쇄 전용 영역을 완전히 숨깁니다 (렌더링 트리에는 포함되도록) */
+        #mobile-print-zone {
+            visibility: hidden;
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        /* 🖨️ 2. 아이폰/모바일 프린트 옵션창이 켜질 때만 작동하는 스타일 */
         @media print {
-            /* 원래 있던 모든 본문 내용을 인쇄 화면에서 숨깁니다 */
-            #web-content {
+            /* 브라우저 기본 상하단 주소창, 페이지 번호 강제 삭제 */
+            @page {
+                margin: 0;
+            }
+            
+            /* 원래 웹 페이지의 모든 글자와 이미지를 통째로 지웁니다 */
+            #web-ui-content {
                 display: none !important;
             }
-            /* 오직 인쇄용으로 만든 영역만 화면에 꽉 차게 보여줍니다 */
-            #print-zone {
+            
+            /* 숨겨져 있던 인쇄 전용 영역을 프린트 창에만 정중앙에 꽉 차게 띄웁니다 */
+            #mobile-print-zone {
+                visibility: visible !important;
+                position: static !important;
                 display: flex !important;
                 justify-content: center;
                 align-items: center;
                 width: 100vw;
                 height: 100vh;
-            }
-            #print-zone img {
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
-            }
-            /* 인쇄 시 브라우저가 기본으로 넣는 상하단 주소/날짜 여백 제거 */
-            @page {
                 margin: 0;
+                padding: 0;
+            }
+            
+            #mobile-print-zone img {
+                max-width: 100% !important;
+                max-height: 100% !important;
+                object-fit: contain !important;
+                display: block !important;
             }
         }
     </style>
 </head>
 <body>
 
-    <div id="web-content">
-        <h3>아래 이미지를 클릭(터치)하시면 인쇄를 시작합니다.</h3>
-        <p style="color: #666; font-size: 14px;">모바일 대응</p>
+    <div id="web-ui-content">
+        <h3>아래 이미지를 터치(클릭)해 보세요.</h3>
+        <p style="color: #666; font-size: 14px;">프린트를 시작합니다.</p>
         
         <img src="https://damipapa.github.io/test/dual max.jpg" 
-             data-print="https://damipapa.github.io/test/guide.jpg" 
              class="clickable-img" 
-             onclick="forceMobilePrint(this)">
+             onclick="triggerPurePrint()">
     </div>
 
-    <div id="print-zone" style="display: none;"></div>
+    <div id="mobile-print-zone">
+        <img src="https://damipapa.github.io/test/guide.jpg">
+    </div>
 
 
     <script>
-        function forceMobilePrint(element) {
-            const printImgSrc = element.getAttribute('data-print');
-            if (!printImgSrc) return;
-
-            const printZone = document.getElementById('print-zone');
-
-            // 1. 인쇄 영역에 고화질 프린트용 이미지를 주입합니다.
-            printZone.innerHTML = '<img id="final-print-target" src="' + printImgSrc + '">';
-            
-            const finalImg = document.getElementById('final-print-target');
-
-            // 2. 이미지가 모바일 메모리에 로드된 것을 확인한 후 작동
-            finalImg.onload = function() {
-                
-                // [핵심] 모바일 브라우저 속이기: 
-                // 인쇄 창을 켜기 직전, 화면 전체를 인쇄용 이미지 영역으로 강제 교체합니다.
-                document.getElementById('web-content').style.display = 'none';
-                printZone.style.display = 'flex';
-
-                // 모바일 기기가 바뀐 화면을 완전히 인식하도록 0.3초 여유를 준 뒤 인쇄 팝업 호출
-                setTimeout(() => {
-                    window.print();
-                    
-                    // 인쇄 창이 닫히거나 취소되었을 때 원래 화면으로 복구합니다.
-                    setTimeout(() => {
-                        document.getElementById('web-content').style.display = 'block';
-                        printZone.style.display = 'none';
-                        printZone.innerHTML = ''; // 메모리 정리
-                    }, 500);
-
-                }, 300);
-            };
-            
-            // 캐시된 이미지일 경우 onload가 안 지날 수 있으므로 예외 처리
-            if (finalImg.complete) {
-                finalImg.onload();
-            }
+        function triggerPurePrint() {
+            // 자바스크립트는 화면을 조작하지 않고 오직 프린트 창만 깨웁니다.
+            // 인쇄 창이 켜지는 순간 @media print CSS가 발동하여 이미지를 낚아챕니다.
+            window.print();
         }
     </script>
 
