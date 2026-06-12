@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모바일/PC 겸용 이미지 인쇄</title>
+    <style>
+        .printable-img {
+            cursor: pointer;
+            width: 100%;
+            max-width: 400px; /* 모바일 반응형 크기 조절 */
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .printable-img:active {
+            transform: scale(0.98); /* 모바일 터치 피드백 */
+        }
+    </style>
+</head>
+<body>
+
+    <div style="padding: 20px; text-align: center;">
+        <h3>이미지를 터치(클릭)하면 바로 인쇄됩니다.</h3>
+        <p style="color: #666; font-size: 14px;">(모바일 앱/브라우저 내장 인쇄 기능 연동)</p>
+        
+        <img src="https://picsum.photos/600/400" class="printable-img" onclick="printImageMobileFriendly(this.src)">
+    </div>
+
+    <script>
+        function printImageMobileFriendly(imgSrc) {
+            // 1. 기존에 생성된 인쇄용 프레임이 있다면 제거
+            const oldFrame = document.getElementById('photo-print-frame');
+            if (oldFrame) oldFrame.remove();
+
+            // 2. 숨겨진 iframe 생성
+            const iframe = document.createElement('iframe');
+            iframe.id = 'photo-print-frame';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
+
+            // 3. iframe 내부에 HTML 및 이미지 삽입
+            const pri = iframe.contentWindow;
+            pri.document.open();
+            pri.document.write('<html><head><title>Print</title>');
+            // 인쇄 시 여백을 없애고 이미지가 꽉 차게 설정하는 CSS
+            pri.document.write('<style>@page { margin: 0; } body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }</style>');
+            pri.document.write('</head><body>');
+            pri.document.write('<img id="print-target" src="' + imgSrc + '" style="max-width:100%; max-height:100%; object-fit:contain;">');
+            pri.document.write('</body></html>');
+            pri.document.close();
+
+            // 4. iframe 안의 이미지가 '완전히 로드된 후' 인쇄 실행
+            const printImg = pri.document.getElementById('print-target');
+            printImg.onload = function() {
+                pri.focus();
+                pri.print();
+                
+                // 모바일 환경을 고려해 약간의 시차를 두고 iframe 제거
+                setTimeout(() => {
+                    iframe.remove();
+                }, 1000);
+            };
+        }
+    </script>
+
+</body>
+</html>
