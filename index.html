@@ -3,103 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>화면/인쇄 이미지 다르게 설정</title>
+    <title>cimilre 유두 사이즈 가이드</title>
     <style>
         .clickable-img {
             cursor: pointer;
             width: 100%;
             max-width: 400px;
-            border: 2px solid #ddd;
             border-radius: 8px;
-            transition: transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .clickable-img:active {
-            transform: scale(0.98); /* 모바일 터치 피드백 */
+        /* 🔥 중요: 인쇄용 원본 이미지를 화면에는 안 보이게 배경에 미리 띄워둡니다.
+          display: none을 쓰면 브라우저가 로딩을 안 하므로, 크기를 0으로 해서 숨깁니다.
+        */
+        .hidden-preload-img {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
     <div style="padding: 20px; text-align: center;">
-        <h3>화면 이미지와 인쇄 이미지가 다르게 작동합니다.</h3>
-        <p style="color: #666; font-size: 14px;">아래 이미지를 누르면 프린트 창에는 다른 이미지가 나타납니다.</p>
+        <h3>아래 이미지를 클릭(터치)하시면 인쇄를 시작합니다.</h3>
         
         <img src="https://damipapa.github.io/test/DUALPRO_HT5.png" 
-             data-print="https://damipapa.github.io/test/dual max.jpg" 
              class="clickable-img" 
-             onclick="printCustomImage(this)">
+             onclick="printPreloadedImage()">
+             
+        <img id="my-print-image" 
+             src="https://damipapa.github.io/test/dual max.jpg" 
+             class="hidden-preload-img">
     </div>
 
     <script>
-        async function printCustomImage(element) {
-            // 태그에 심어둔 'data-print' 속성에서 인쇄용 이미지 주소를 가져옵니다.
-            const printImgSrc = element.getAttribute('data-print');
+        function printPreloadedImage() {
+            // 미리 로드되고 있는 이미지 엘리먼트를 가져옵니다.
+            const originImg = document.getElementById('my-print-image');
             
-            if (!printImgSrc) {
-                alert("인쇄용 이미지가 지정되지 않았습니다.");
-                return;
-            }
+            // 이미지 주소 추출
+            const printImgSrc = originImg.src;
 
-            try {
-                // 1. 모바일 엑박 방지를 위해 인쇄용 이미지를 Blob 데이터로 미리 다운로드
-                const response = await fetch(printImgSrc);
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
+            // 기존 인쇄 프레임 제거
+            const oldFrame = document.getElementById('photo-print-frame');
+            if (oldFrame) oldFrame.remove();
 
-                // 2. 기존 인쇄 프레임 제거 및 새로 생성
-                const oldFrame = document.getElementById('photo-print-frame');
-                if (oldFrame) oldFrame.remove();
+            // 숨겨진 iframe 생성
+            const iframe = document.createElement('iframe');
+            iframe.id = 'photo-print-frame';
+            iframe.style.position = 'fixed';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
 
-                const iframe = document.createElement('iframe');
-                iframe.id = 'photo-print-frame';
-                iframe.style.position = 'fixed';
-                iframe.style.width = '0';
-                iframe.style.height = '0';
-                iframe.style.border = '0';
-                document.body.appendChild(iframe);
+            const pri = iframe.contentWindow;
+            pri.document.open();
+            pri.document.write('<html><head><title>Print</title>');
+            pri.document.write('<style>@page { margin: 0; } body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }</style>');
+            pri.document.write('</head><body>');
+            // 이미 캐시에 저장된 이미지 주소가 들어갑니다.
+            pri.document.write('<img id="print-target" src="' + printImgSrc + '" style="max-width:100%; max-height:100%; object-fit:contain;">');
+            pri.document.write('</body></html>');
+            pri.document.close();
 
-                const pri = iframe.contentWindow;
-                pri.document.open();
-                pri.document.write('<html><head><title>Print</title>');
-                pri.document.write('<style>@page { margin: 0; } body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }</style>');
-                pri.document.write('</head><body>');
-                // 다운로드된 프린트용 고유 Blob URL 삽입
-                pri.document.write('<img id="print-target" src="' + blobUrl + '" style="max-width:100%; max-height:100%; object-fit:contain;">');
-                pri.document.write('</body></html>');
-                pri.document.close();
-
-                const printImg = pri.document.getElementById('print-target');
-                
-                // 3. 이미지 디코딩 및 로딩 완료 후 인쇄 실행 (모바일 완벽 대응)
+            const printImg = pri.document.getElementById('print-target');
+            
+            // 모바일 사파리/크롬 브라우저가 두 번 확인할 수 있도록 만전을 기함
+            if (printImg.complete) {
+                // 이미 캐싱 완료되었다면 바로 인쇄 실행
+                runPrint(pri, iframe);
+            } else {
+                // 혹시나 아직 로딩 중이라면 로드 완료 후 실행
                 printImg.onload = function() {
-                    if (typeof printImg.decode === 'function') {
-                        printImg.decode().then(() => {
-                            executePrint(pri, iframe, blobUrl);
-                        }).catch(() => {
-                            executePrint(pri, iframe, blobUrl);
-                        });
-                    } else {
-                        executePrint(pri, iframe, blobUrl);
-                    }
+                    runPrint(pri, iframe);
                 };
-
-            } catch (error) {
-                console.error("이미지 로드 실패 (CORS 문제일 수 있습니다):", error);
-                alert("인쇄용 이미지를 불러오는 데 실패했습니다. 이미지 주소를 확인해 주세요.");
             }
         }
 
-        function executePrint(pri, iframe, blobUrl) {
+        function runPrint(pri, iframe) {
+            // 모바일 기기가 iframe 내부 컨텐츠를 인식할 수 있도록 0.3초의 아주 짧은 여유를 줍니다.
             setTimeout(() => {
                 pri.focus();
                 pri.print();
-                
-                // 인쇄 종료 후 정리
-                setTimeout(() => {
-                    iframe.remove();
-                    URL.revokeObjectURL(blobUrl);
-                }, 1000);
-            }, 100);
+                setTimeout(() => { iframe.remove(); }, 1500);
+            }, 300);
         }
     </script>
 
