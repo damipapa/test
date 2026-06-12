@@ -1,114 +1,125 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cimilre 유두 사이즈 가이드</title>
     <style>
-        /* 일반 웹 화면 UI 스타일 (PC & 모바일 공통) */
+        /* 1. 일반 웹 화면 UI */
         body {
             margin: 0;
             padding: 20px;
             text-align: center;
             font-family: sans-serif;
-            background-color: #f9f9f9;
         }
         .container {
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
-            background: #fff;
-            padding: 30px 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
         .clickable-img {
             cursor: pointer;
             width: 100%;
-            max-width: 400px;
-            height: auto;
+            max-width: 350px;
             border-radius: 8px;
-            border: 1px solid #e1e1e1;
-        }
-        
-        /* 평소에는 인쇄용 영역을 완전히 숨김 */
-        #universal-print-zone {
-            display: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        /* 2. 프린트 인쇄 실행 시 스타일 */
+        /* 팝업 오버레이 (평소에는 완전히 숨김) */
+        #print-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff; /* 배경을 완전히 흰색으로 채움 */
+            z-index: 99999;
+            justify-content: center;
+            align-items: flex-start; /* 상단부터 채우도록 설정 */
+            padding: 0;
+            margin: 0;
+        }
+
+        /* 팝업 내부 이미지 설정 */
+        #print-popup-overlay img {
+            width: 100% !important;
+            height: auto !important;
+            max-width: 100% !important;
+            display: block;
+        }
+
+        /* 2. 프린트 인쇄 순간의 강제 스타일 */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0mm; /* 여백을 0으로 하고 컨테이너에서 마진 제어 */
+                margin: 0; /* 여백 무시 */
             }
-            
             html, body {
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #fff !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                overflow: hidden !important;
             }
-
-            /* 원래 화면 UI 삭제 */
-            #web-ui-layout {
+            /* 원래 웹 화면은 완벽히 제거 */
+            #web-ui-content {
                 display: none !important;
             }
-            
-            /* 인쇄 영역 활성화 */
-            #universal-print-zone {
-                display: block !important;
+            /* 인쇄 팝업만 무조건 화면 전체에 꽉 차게 노출 */
+            #print-popup-overlay {
+                display: flex !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
                 width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            /* PC와 모바일 뷰포트 일치 후, 화면 가로에 가득 차게 설정 */
-            #universal-print-zone img {
-                display: block !important;
-                width: 100% !important;
-                height: auto !important;
-                max-width: 100% !important;
-                margin: 0 auto !important;
-                page-break-inside: avoid;
+                height: 100% !important;
+                background: #fff !important;
             }
         }
     </style>
 </head>
 <body>
 
-    <div id="web-ui-layout">
+    <div id="web-ui-content">
         <div class="container">
-            <h3>이미지를 클릭하시면 프린트됩니다.</h3>
-            <p></p>
+            <h3>이미지를 터치(클릭)하면 인쇄됩니다.</h3>
+            <p>test 입니다.</p>
             
-            <img src="https://damipapa.github.io/test/dual max.jpg" 
+            <img src="https://damipapa.github.io/test/dual%20max.jpg" 
                  class="clickable-img" 
-                 onclick="forceResponsivePrint()">
+                 onclick="finalMobilePrint()">
         </div>
     </div>
 
-    <div id="universal-print-zone">
-        <img src="https://damipapa.github.io/test/guide.jpg">
+    <div id="print-popup-overlay">
+        <img src="https://damipapa.github.io/test/guide.jpg" id="popup-print-img">
     </div>
 
     <script>
-        function forceResponsivePrint() {
-            const viewport = document.getElementById('viewport');
-            
-            // 1. [핵심] 인쇄 직전, 모바일 뷰포트를 강제로 PC 규격(너비 1024px)으로 변경합니다.
-            // 이렇게 하면 모바일 사파리가 "아, PC 화면이구나"라고 착각하여 축소 처리를 하지 않습니다.
-            viewport.setAttribute('content', 'width=1024');
+        function finalMobilePrint() {
+            const overlay = document.getElementById('print-popup-overlay');
+            const printImg = document.getElementById('popup-print-img');
 
-            // 2. 브라우저가 변경된 뷰포트를 반영할 수 있도록 0.2초 여유를 준 뒤 인쇄창을 엽니다.
-            setTimeout(() => {
-                window.print();
+            // 1. 이미지가 캐시되어 있지 않을 수 있으므로 로드 완료를 보장
+            if (printImg.complete) {
+                startPrintProcess();
+            } else {
+                printImg.onload = startPrintProcess;
+            }
 
-                // 3. 인쇄 창이 켜진 후(또는 사용자가 취소/완료를 누르고 돌아온 후) 
-                // 다시 원래의 깨끗한 모바일 반응형 뷰포트로 원상복구합니다.
+            function startPrintProcess() {
+                // 2. [핵심] 인쇄 버튼을 누르면 눈에 보이는 화면 전체를 인쇄용 이미지로 덮어버립니다.
+                overlay.style.display = 'flex';
+
+                // 3. 모바일 사파리 엔진이 바뀐 꽉 찬 화면을 완전히 인지하도록 대기 시간을 줍니다.
                 setTimeout(() => {
-                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
-                }, 1000);
-                
-            }, 200);
+                    window.print();
+
+                    // 4. 인쇄 창이 뜨고 난 뒤(혹은 취소/완료 후 돌아온 뒤) 팝업을 다시 부드럽게 숨깁니다.
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                    }, 1000);
+
+                }, 350); // 모바일의 느린 렌더링 속도를 배려한 시간
+            }
         }
     </script>
 
