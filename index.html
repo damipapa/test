@@ -5,91 +5,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>cimilre 유두 사이즈 가이드</title>
     <style>
+        /* 기본 웹사이트 스타일 */
+        body {
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            font-family: sans-serif;
+        }
         .clickable-img {
             cursor: pointer;
             width: 100%;
             max-width: 400px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        /* 🔥 중요: 인쇄용 원본 이미지를 화면에는 안 보이게 배경에 미리 띄워둡니다.
-          display: none을 쓰면 브라우저가 로딩을 안 하므로, 크기를 0으로 해서 숨깁니다.
-        */
-        .hidden-preload-img {
-            position: absolute;
-            width: 0;
-            height: 0;
-            opacity: 0;
-            pointer-events: none;
+
+        /* 🖨️ 인쇄할 때의 전용 스타일 설정 */
+        @media print {
+            /* 원래 있던 모든 본문 내용을 인쇄 화면에서 숨깁니다 */
+            #web-content {
+                display: none !important;
+            }
+            /* 오직 인쇄용으로 만든 영역만 화면에 꽉 차게 보여줍니다 */
+            #print-zone {
+                display: flex !important;
+                justify-content: center;
+                align-items: center;
+                width: 100vw;
+                height: 100vh;
+            }
+            #print-zone img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+            /* 인쇄 시 브라우저가 기본으로 넣는 상하단 주소/날짜 여백 제거 */
+            @page {
+                margin: 0;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div style="padding: 20px; text-align: center;">
+    <div id="web-content">
         <h3>아래 이미지를 클릭(터치)하시면 인쇄를 시작합니다.</h3>
+        <p style="color: #666; font-size: 14px;">모바일 대응</p>
         
-        <img src="https://damipapa.github.io/test/DUALPRO_HT5.png" 
+        <img src="https://damipapa.github.io/test/dual max.jpg" 
+             data-print="https://damipapa.github.io/test/guide.jpg" 
              class="clickable-img" 
-             onclick="printPreloadedImage()">
-             
-        <img id="my-print-image" 
-             src="https://damipapa.github.io/test/guide.jpg" 
-             class="hidden-preload-img">
+             onclick="forceMobilePrint(this)">
     </div>
 
+    <div id="print-zone" style="display: none;"></div>
+
+
     <script>
-        function printPreloadedImage() {
-            // 미리 로드되고 있는 이미지 엘리먼트를 가져옵니다.
-            const originImg = document.getElementById('my-print-image');
+        function forceMobilePrint(element) {
+            const printImgSrc = element.getAttribute('data-print');
+            if (!printImgSrc) return;
+
+            const printZone = document.getElementById('print-zone');
+
+            // 1. 인쇄 영역에 고화질 프린트용 이미지를 주입합니다.
+            printZone.innerHTML = '<img id="final-print-target" src="' + printImgSrc + '">';
             
-            // 이미지 주소 추출
-            const printImgSrc = originImg.src;
+            const finalImg = document.getElementById('final-print-target');
 
-            // 기존 인쇄 프레임 제거
-            const oldFrame = document.getElementById('photo-print-frame');
-            if (oldFrame) oldFrame.remove();
+            // 2. 이미지가 모바일 메모리에 로드된 것을 확인한 후 작동
+            finalImg.onload = function() {
+                
+                // [핵심] 모바일 브라우저 속이기: 
+                // 인쇄 창을 켜기 직전, 화면 전체를 인쇄용 이미지 영역으로 강제 교체합니다.
+                document.getElementById('web-content').style.display = 'none';
+                printZone.style.display = 'flex';
 
-            // 숨겨진 iframe 생성
-            const iframe = document.createElement('iframe');
-            iframe.id = 'photo-print-frame';
-            iframe.style.position = 'fixed';
-            iframe.style.width = '0';
-            iframe.style.height = '0';
-            iframe.style.border = '0';
-            document.body.appendChild(iframe);
+                // 모바일 기기가 바뀐 화면을 완전히 인식하도록 0.3초 여유를 준 뒤 인쇄 팝업 호출
+                setTimeout(() => {
+                    window.print();
+                    
+                    // 인쇄 창이 닫히거나 취소되었을 때 원래 화면으로 복구합니다.
+                    setTimeout(() => {
+                        document.getElementById('web-content').style.display = 'block';
+                        printZone.style.display = 'none';
+                        printZone.innerHTML = ''; // 메모리 정리
+                    }, 500);
 
-            const pri = iframe.contentWindow;
-            pri.document.open();
-            pri.document.write('<html><head><title>Print</title>');
-            pri.document.write('<style>@page { margin: 0; } body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }</style>');
-            pri.document.write('</head><body>');
-            // 이미 캐시에 저장된 이미지 주소가 들어갑니다.
-            pri.document.write('<img id="print-target" src="' + printImgSrc + '" style="max-width:100%; max-height:100%; object-fit:contain;">');
-            pri.document.write('</body></html>');
-            pri.document.close();
-
-            const printImg = pri.document.getElementById('print-target');
+                }, 300);
+            };
             
-            // 모바일 사파리/크롬 브라우저가 두 번 확인할 수 있도록 만전을 기함
-            if (printImg.complete) {
-                // 이미 캐싱 완료되었다면 바로 인쇄 실행
-                runPrint(pri, iframe);
-            } else {
-                // 혹시나 아직 로딩 중이라면 로드 완료 후 실행
-                printImg.onload = function() {
-                    runPrint(pri, iframe);
-                };
+            // 캐시된 이미지일 경우 onload가 안 지날 수 있으므로 예외 처리
+            if (finalImg.complete) {
+                finalImg.onload();
             }
-        }
-
-        function runPrint(pri, iframe) {
-            // 모바일 기기가 iframe 내부 컨텐츠를 인식할 수 있도록 0.3초의 아주 짧은 여유를 줍니다.
-            setTimeout(() => {
-                pri.focus();
-                pri.print();
-                setTimeout(() => { iframe.remove(); }, 1500);
-            }, 300);
         }
     </script>
 
