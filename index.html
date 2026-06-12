@@ -44,7 +44,7 @@
             /* 기본 여백을 의도적으로 약간 주어 안정적인 마진 확보 */
             @page {
                 size: A4 portrait; /* A4 세로 방향 명시 */
-                margin: 10mm;      /* 상하좌우 10mm 여백 */
+                margin: 0mm;      /* 상하좌우 0mm 여백 */
             }
             
             /* 인쇄 시 브라우저 UI 초기화 */
@@ -72,13 +72,13 @@
             }
             
             /* 🔥 핵심: %나 px 대신 실제 출력 크기인 'mm'를 사용합니다.
-              A4 폭(210mm)에서 좌우 여백(20mm)을 뺀 실제 가로 꽉 찬 크기인 190mm 지정
+              A4 폭(210mm) 지정
             */
             #universal-print-zone img {
                 display: block !important;
-                width: 190mm !important;  /* 💡 모바일 브라우저의 뷰포트를 무시하는 절대 수치 */
+                width: 210mm !important;  /* 💡 모바일 브라우저의 뷰포트를 무시하는 절대 수치 */
                 height: auto !important;   /* 세로 비율은 원본 그대로 유지 */
-                max-width: 190mm !important;
+                max-width: 210mm !important;
                 margin: 0 auto !important;
                 page-break-inside: avoid;
             }
