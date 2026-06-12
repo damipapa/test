@@ -5,73 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cimilre 유두 사이즈 가이드</title>
     <style>
-        /* 1. 일반 웹 화면 UI */
+        /* 1. 일반 웹 화면 UI 스타일 (PC & 모바일 공통) */
         body {
             margin: 0;
             padding: 20px;
             text-align: center;
             font-family: sans-serif;
+            background-color: #f5f5f5;
         }
         .container {
             max-width: 500px;
             margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
         .clickable-img {
             cursor: pointer;
             width: 100%;
             max-width: 350px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            border-radius: 6px;
         }
 
         /* 팝업 오버레이 (평소에는 완전히 숨김) */
-        #print-popup-overlay {
+        #print-lock-overlay {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #ffffff; /* 배경을 완전히 흰색으로 채움 */
+            background-color: #ffffff;
             z-index: 99999;
-            justify-content: center;
-            align-items: flex-start; /* 상단부터 채우도록 설정 */
-            padding: 0;
-            margin: 0;
         }
 
-        /* 팝업 내부 이미지 설정 */
-        #print-popup-overlay img {
-            width: 100% !important;
-            height: auto !important;
-            max-width: 100% !important;
-            display: block;
-        }
-
-        /* 2. 프린트 인쇄 순간의 강제 스타일 */
+        /* 2. 프린트 인쇄 순간의 강제 물리 고정 스타일 */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0; /* 여백 무시 */
+                margin: 0mm !important; /* 브라우저 임의 여백 강제 제거 */
             }
+            
+            /* HTML과 BODY를 A4 용지 표준 픽셀 해상도로 강제 고정합니다.
+               이 설정을 통해 모바일 사파리가 이미지를 마음대로 축소하지 못하게 만듭니다. */
             html, body {
-                width: 100vw !important;
-                height: 100vh !important;
+                width: 794px !important;   /* A4 가로 표준 픽셀 */
+                height: 1123px !important; /* A4 세로 표준 픽셀 */
                 overflow: hidden !important;
+                background: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
-            /* 원래 웹 화면은 완벽히 제거 */
+
+            /* 원래 웹 UI는 완벽히 삭제 */
             #web-ui-content {
                 display: none !important;
             }
-            /* 인쇄 팝업만 무조건 화면 전체에 꽉 차게 노출 */
-            #print-popup-overlay {
-                display: flex !important;
+
+            /* 인쇄 영역을 A4 크기 그대로 화면에 1:1 매칭 */
+            #print-lock-overlay {
+                display: block !important;
                 position: absolute !important;
                 top: 0 !important;
                 left: 0 !important;
+                width: 794px !important;
+                height: 1123px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 이미지를 축소/확대 없이 100% 원본 비율로 고정 */
+            #print-lock-overlay img {
                 width: 100% !important;
-                height: 100% !important;
-                background: #fff !important;
+                height: auto !important;
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
         }
     </style>
@@ -80,45 +91,44 @@
 
     <div id="web-ui-content">
         <div class="container">
-            <h3>이미지를 터치(클릭)하면 인쇄됩니다.</h3>
-            <p>test 입니다.</p>
+            <h3>유두 사이즈 가이드</h3>
+            <p>이미지를 터치(클릭)하면 출력을 시작합니다..</p>
             
             <img src="https://damipapa.github.io/test/dual%20max.jpg" 
                  class="clickable-img" 
-                 onclick="finalMobilePrint()">
+                 onclick="startExactScalePrint()">
         </div>
     </div>
 
-    <div id="print-popup-overlay">
-        <img src="https://damipapa.github.io/test/guide.jpg" id="popup-print-img">
+    <div id="print-lock-overlay">
+        <img src="https://damipapa.github.io/test/guide.jpg" id="exact-print-img">
     </div>
 
     <script>
-        function finalMobilePrint() {
-            const overlay = document.getElementById('print-popup-overlay');
-            const printImg = document.getElementById('popup-print-img');
+        function startExactScalePrint() {
+            const overlay = document.getElementById('print-lock-overlay');
+            const printImg = document.getElementById('exact-print-img');
 
-            // 1. 이미지가 캐시되어 있지 않을 수 있으므로 로드 완료를 보장
             if (printImg.complete) {
-                startPrintProcess();
+                executeExactPrint();
             } else {
-                printImg.onload = startPrintProcess;
+                printImg.onload = executeExactPrint;
             }
 
-            function startPrintProcess() {
-                // 2. [핵심] 인쇄 버튼을 누르면 눈에 보이는 화면 전체를 인쇄용 이미지로 덮어버립니다.
-                overlay.style.display = 'flex';
+            function executeExactPrint() {
+                // 1. 터치 순간 전체 화면을 A4 규격 레이아웃으로 변경
+                overlay.style.display = 'block';
 
-                // 3. 모바일 사파리 엔진이 바뀐 꽉 찬 화면을 완전히 인지하도록 대기 시간을 줍니다.
+                // 2. 모바일 브라우저가 바뀐 해상도를 뇌에 동기화할 수 있도록 대기
                 setTimeout(() => {
                     window.print();
 
-                    // 4. 인쇄 창이 뜨고 난 뒤(혹은 취소/완료 후 돌아온 뒤) 팝업을 다시 부드럽게 숨깁니다.
+                    // 3. 인쇄 완료/취소 후 복구
                     setTimeout(() => {
                         overlay.style.display = 'none';
                     }, 1000);
 
-                }, 350); // 모바일의 느린 렌더링 속도를 배려한 시간
+                }, 400); // 사파리 엔진의 고정 딜레이를 완벽히 우회하기 위한 시간
             }
         }
     </script>
