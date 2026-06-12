@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0">
     <title>cimilre 유두 사이즈 가이드</title>
     <style>
-        /* ==========================================
-           1. 일반 웹 화면 UI 스타일 (PC & 모바일 공통)
-           ========================================== */
+        /* 일반 웹 화면 UI 스타일 (PC & 모바일 공통) */
         body {
             margin: 0;
             padding: 20px;
@@ -37,48 +34,39 @@
             display: none;
         }
 
-        /* ==========================================
-           2. 🖨️ 인쇄 실행 시 스타일 (모바일 축소 절대 방어)
-           ========================================== */
+        /* 2. 프린트 인쇄 실행 시 스타일 */
         @media print {
-            /* 기본 여백을 의도적으로 약간 주어 안정적인 마진 확보 */
             @page {
-                size: A4 portrait; /* A4 세로 방향 명시 */
-                margin: 0mm;      /* 상하좌우 0mm 여백 */
+                size: A4 portrait;
+                margin: 0mm; /* 여백을 0으로 하고 컨테이너에서 마진 제어 */
             }
             
-            /* 인쇄 시 브라우저 UI 초기화 */
             html, body {
                 width: 100% !important;
-                height: auto !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 background: #fff !important;
             }
 
-            /* 기존 웹 화면 UI는 삭제 */
+            /* 원래 화면 UI 삭제 */
             #web-ui-layout {
                 display: none !important;
             }
             
-            /* 인쇄 영역을 정중앙 정렬로 배치 */
+            /* 인쇄 영역 활성화 */
             #universal-print-zone {
-                display: flex !important;
-                justify-content: center;
-                align-items: flex-start;
+                display: block !important;
                 width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
             
-            /* 🔥 핵심: %나 px 대신 실제 출력 크기인 'mm'를 사용합니다.
-              A4 폭(210mm) 지정
-            */
+            /* PC와 모바일 뷰포트 일치 후, 화면 가로에 가득 차게 설정 */
             #universal-print-zone img {
                 display: block !important;
-                width: 210mm !important;  /* 💡 모바일 브라우저의 뷰포트를 무시하는 절대 수치 */
-                height: auto !important;   /* 세로 비율은 원본 그대로 유지 */
-                max-width: 210mm !important;
+                width: 100% !important;
+                height: auto !important;
+                max-width: 100% !important;
                 margin: 0 auto !important;
                 page-break-inside: avoid;
             }
@@ -89,18 +77,40 @@
 
     <div id="web-ui-layout">
         <div class="container">
-            <h3>이미지를 터치(클릭)하시면 프린트됩니다.</h3>
+            <h3>이미지를 클릭하시면 프린트됩니다.</h3>
             <p></p>
             
-            <img src="https://damipapa.github.io/test/dual%20max.jpg" 
+            <img src="https://damipapa.github.io/test/dual max.jpg" 
                  class="clickable-img" 
-                 onclick="window.print()">
+                 onclick="forceResponsivePrint()">
         </div>
     </div>
 
     <div id="universal-print-zone">
         <img src="https://damipapa.github.io/test/guide.jpg">
     </div>
+
+    <script>
+        function forceResponsivePrint() {
+            const viewport = document.getElementById('viewport');
+            
+            // 1. [핵심] 인쇄 직전, 모바일 뷰포트를 강제로 PC 규격(너비 1024px)으로 변경합니다.
+            // 이렇게 하면 모바일 사파리가 "아, PC 화면이구나"라고 착각하여 축소 처리를 하지 않습니다.
+            viewport.setAttribute('content', 'width=1024');
+
+            // 2. 브라우저가 변경된 뷰포트를 반영할 수 있도록 0.2초 여유를 준 뒤 인쇄창을 엽니다.
+            setTimeout(() => {
+                window.print();
+
+                // 3. 인쇄 창이 켜진 후(또는 사용자가 취소/완료를 누르고 돌아온 후) 
+                // 다시 원래의 깨끗한 모바일 반응형 뷰포트로 원상복구합니다.
+                setTimeout(() => {
+                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+                }, 1000);
+                
+            }, 200);
+        }
+    </script>
 
 </body>
 </html>
