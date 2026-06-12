@@ -5,86 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>cimilre 유두 사이즈 가이드</title>
     <style>
-        /* 1. 일반 웹 화면 스타일 */
+        /* ==========================================
+           1. 일반 웹 화면 UI 스타일 (PC & 모바일 공통)
+           ========================================== */
         body {
             margin: 0;
             padding: 20px;
             text-align: center;
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f9f9f9;
         }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h3 { margin-top: 0; color: #333; }
+        p { color: #666; font-size: 14px; margin-bottom: 25px; }
+
+        /* 화면에 보이는 메인 이미지 */
         .clickable-img {
             cursor: pointer;
             width: 100%;
             max-width: 400px;
+            height: auto;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e1e1e1;
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+        .clickable-img:hover { opacity: 0.9; }
+        .clickable-img:active { transform: scale(0.98); }
+
+        /* [중요] 평소에는 인쇄용 영역을 완전히 숨겨둡니다 */
+        #universal-print-zone {
+            display: none;
         }
 
-        /* 평소에는 인쇄 전용 영역을 완전히 숨깁니다 (렌더링 트리에는 포함되도록) */
-        #mobile-print-zone {
-            visibility: hidden;
-            position: absolute;
-            left: -9999px;
-            top: -9999px;
-            width: 0;
-            height: 0;
-            overflow: hidden;
-        }
-
-        /* 🖨️ 2. 아이폰/모바일 프린트 옵션창이 켜질 때만 작동하는 스타일 */
+        /* ==========================================
+           2. 🖨️ 인쇄 실행 시 스타일 (PC & 모바일 공통 적용)
+           ========================================== */
         @media print {
-            /* 브라우저 기본 상하단 주소창, 페이지 번호 강제 삭제 */
+            /* 종이 여백을 제로로 만들어서 모바일 축소 버그를 방지합니다 */
             @page {
-                margin: 0;
+                size: auto;
+                margin: 0mm;
             }
             
-            /* 원래 웹 페이지의 모든 글자와 이미지를 통째로 지웁니다 */
-            #web-ui-content {
+            /* 인쇄 시 브라우저의 기본 UI 구조를 강제 초기화 */
+            html, body {
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            /* 원래 화면에 있던 모든 글자와 버튼, 레이아웃을 통째로 숨깁니다 */
+            #web-ui-layout {
                 display: none !important;
             }
             
-            /* 숨겨져 있던 인쇄 전용 영역을 프린트 창에만 정중앙에 꽉 차게 띄웁니다 */
-            #mobile-print-zone {
-                visibility: visible !important;
-                position: static !important;
-                display: flex !important;
-                justify-content: center;
-                align-items: center;
-                width: 100vw;
-                height: 100vh;
-                margin: 0;
-                padding: 0;
+            /* 숨겨져 있던 인쇄 영역을 깨우고 화면 전체를 차지하게 합니다 */
+            #universal-print-zone {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             
-            #mobile-print-zone img {
-                max-width: 100% !important;
-                max-height: 100% !important;
-                object-fit: contain !important;
+            /* 인쇄용 이미지를 종이 가로폭(100%)에 꽉 차게 맞추고 비율을 고정합니다 */
+            #universal-print-zone img {
                 display: block !important;
+                width: 100% !important;   /* 종이 가로폭에 100% 채움 */
+                height: auto !important;   /* 원본 비율 유지 */
+                max-width: 100% !important;
+                margin: 0 auto !important;
+                page-break-inside: avoid;  /* 이미지 중간 잘림 방지 */
             }
         }
     </style>
 </head>
 <body>
 
-    <div id="web-ui-content">
-        <h3>아래 이미지를 터치(클릭)해 보세요.</h3>
-        <p style="color: #666; font-size: 14px;">프린트를 시작합니다.</p>
-        
-        <img src="https://damipapa.github.io/test/dual max.jpg" 
-             class="clickable-img" 
-             onclick="triggerPurePrint()">
+    <div id="web-ui-layout">
+        <div class="container">
+            <h3>이미지를 클릭(터치)하세요</h3>
+            <p>프린트를 시작합니다.</p>
+            
+            <img src="https://damipapa.github.io/test/dual%20max.jpg" 
+                 class="clickable-img" 
+                 onclick="runUniversalPrint()">
+        </div>
     </div>
 
-    <div id="mobile-print-zone">
+    <div id="universal-print-zone">
         <img src="https://damipapa.github.io/test/guide.jpg">
     </div>
 
-
     <script>
-        function triggerPurePrint() {
-            // 자바스크립트는 화면을 조작하지 않고 오직 프린트 창만 깨웁니다.
-            // 인쇄 창이 켜지는 순간 @media print CSS가 발동하여 이미지를 낚아챕니다.
+        function runUniversalPrint() {
+            // PC 사파리, 아이폰 iOS 등 모든 환경에서 
+            // @media print CSS가 즉시 동기적으로 발동되도록 기본 print 명령만 내립니다.
             window.print();
         }
     </script>
