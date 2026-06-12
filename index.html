@@ -3,38 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>모바일 완벽 대응 이미지 인쇄</title>
+    <title>화면/인쇄 이미지 다르게 설정</title>
     <style>
-        .printable-img {
+        .clickable-img {
             cursor: pointer;
             width: 100%;
             max-width: 400px;
-            height: auto;
+            border: 2px solid #ddd;
             border-radius: 8px;
+            transition: transform 0.2s;
+        }
+        .clickable-img:active {
+            transform: scale(0.98); /* 모바일 터치 피드백 */
         }
     </style>
 </head>
 <body>
 
     <div style="padding: 20px; text-align: center;">
-        <h3>이미지를 터치하면 미리보기 화면에 정상적으로 나타납니다.</h3>
-        <img src="https://cdn.crowdpic.net/detail-thumb/thumb_d_2F583E5543F7E19139C6FCFFBF9607A6.jpg" class="printable-img" onclick="printImageSecure(this.src)">
+        <h3>화면 이미지와 인쇄 이미지가 다르게 작동합니다.</h3>
+        <p style="color: #666; font-size: 14px;">아래 이미지를 누르면 프린트 창에는 다른 이미지가 나타납니다.</p>
+        
+        <img src="https://cdn.crowdpic.net/detail-thumb/thumb_d_2F583E5543F7E19139C6FCFFBF9607A6.jpg" 
+             data-print="https://png.pngtree.com/thumb_back/fh260/background/20240412/pngtree-happy-small-dog-is-running-on-a-grass-in-park-in-image_15655854.jpg" 
+             class="clickable-img" 
+             onclick="printCustomImage(this)">
     </div>
 
     <script>
-        async function printImageSecure(imgSrc) {
+        async function printCustomImage(element) {
+            // 태그에 심어둔 'data-print' 속성에서 인쇄용 이미지 주소를 가져옵니다.
+            const printImgSrc = element.getAttribute('data-print');
+            
+            if (!printImgSrc) {
+                alert("인쇄용 이미지가 지정되지 않았습니다.");
+                return;
+            }
+
             try {
-                // 1. 이미지를 비동기(fetch)로 가져와서 Blob 데이터로 변환합니다.
-                // 이 과정을 통해 모바일 브라우저가 이미지를 완전히 다운로드하도록 강제합니다.
-                const response = await fetch(imgSrc);
+                // 1. 모바일 엑박 방지를 위해 인쇄용 이미지를 Blob 데이터로 미리 다운로드
+                const response = await fetch(printImgSrc);
                 const blob = await response.blob();
                 const blobUrl = URL.createObjectURL(blob);
 
-                // 2. 기존에 있던 인쇄용 프레임 삭제
+                // 2. 기존 인쇄 프레임 제거 및 새로 생성
                 const oldFrame = document.getElementById('photo-print-frame');
                 if (oldFrame) oldFrame.remove();
 
-                // 3. 숨겨진 iframe 생성
                 const iframe = document.createElement('iframe');
                 iframe.id = 'photo-print-frame';
                 iframe.style.position = 'fixed';
@@ -48,40 +63,38 @@
                 pri.document.write('<html><head><title>Print</title>');
                 pri.document.write('<style>@page { margin: 0; } body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }</style>');
                 pri.document.write('</head><body>');
-                // 다운로드된 Blob URL을 이미지 소스로 지정
-                pri.document.write('<img id="print-target" src="https://cdn.crowdpic.net/detail-thumb/thumb_d_2F583E5543F7E19139C6FCFFBF9607A6.jpg" style="max-width:100%; max-height:100%; object-fit:contain;">');
+                // 다운로드된 프린트용 고유 Blob URL 삽입
+                pri.document.write('<img id="print-target" src="' + blobUrl + '" style="max-width:100%; max-height:100%; object-fit:contain;">');
                 pri.document.write('</body></html>');
                 pri.document.close();
 
                 const printImg = pri.document.getElementById('print-target');
                 
-                // 4. 모바일 기기 메모리에 이미지가 확실히 안착할 때까지 decode()와 onload를 모두 확인
+                // 3. 이미지 디코딩 및 로딩 완료 후 인쇄 실행 (모바일 완벽 대응)
                 printImg.onload = function() {
-                    // 이미지 디코딩까지 완료된 후 안전하게 프린트 창 호출
                     if (typeof printImg.decode === 'function') {
                         printImg.decode().then(() => {
-                            triggerPrint(pri, iframe, blobUrl);
+                            executePrint(pri, iframe, blobUrl);
                         }).catch(() => {
-                            triggerPrint(pri, iframe, blobUrl); // 실패시에도 일단 실행
+                            executePrint(pri, iframe, blobUrl);
                         });
                     } else {
-                        triggerPrint(pri, iframe, blobUrl);
+                        executePrint(pri, iframe, blobUrl);
                     }
                 };
 
             } catch (error) {
-                console.error("이미지를 불러오는 중 오류가 발생했습니다. (CORS 권한 확인 필요):", error);
-                alert("인쇄를 준비하는 중 오류가 발생했습니다.");
+                console.error("이미지 로드 실패 (CORS 문제일 수 있습니다):", error);
+                alert("인쇄용 이미지를 불러오는 데 실패했습니다. 이미지 주소를 확인해 주세요.");
             }
         }
 
-        function triggerPrint(pri, iframe, blobUrl) {
-            // 모바일 사파리/크롬 대응을 위해 포커스를 주고 약간의 시차(100ms) 후 인쇄
+        function executePrint(pri, iframe, blobUrl) {
             setTimeout(() => {
                 pri.focus();
                 pri.print();
                 
-                // 인쇄 창이 닫힌 후 메모리 해제
+                // 인쇄 종료 후 정리
                 setTimeout(() => {
                     iframe.remove();
                     URL.revokeObjectURL(blobUrl);
