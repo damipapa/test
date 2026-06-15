@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>실측 1:1 인쇄 오류 종결</title>
+    <title>CIMILRE 유두 사이드 가이드</title>
     <style>
-        /*            1. 일반 웹 화면 UI 스타일 (사용자 눈에 보이는 화면)
-           ========================================== */
+        /* 1. 일반 웹 화면 UI 스타일 (사용자 눈에 보이는 화면) */
         body {
             margin: 0;
             padding: 20px;
@@ -30,7 +29,7 @@
             border-radius: 6px;
         }
 
-        /* 💡 핵심: 진짜 인쇄될 원본 이미지를 평소에는 화면에서 숨깁니다.
+        /* 진짜 인쇄될 원본 이미지를 평소에는 화면에서 숨깁니다.
            다만, 사파리가 렌더링을 빼먹지 않도록 크기를 1px로 켜두어 백그라운드에 상시 로드시킵니다. */
         #perfect-print-area {
             position: absolute;
@@ -45,9 +44,7 @@
             height: auto;
         }
 
-        /* ==========================================
-           2. 🖨️ 인쇄 창이 켜지는 순간 발동하는 하드웨어 스타일
-           ========================================== */
+        /* 2. 프린트 인쇄 창이 켜지는 순간 발동하는 하드웨어 스타일 */
         @media print {
             @page {
                 size: A4 portrait;
@@ -95,17 +92,17 @@
 
     <div id="web-ui-content">
         <div class="container">
-            <h3>실측 가이드 도안 인쇄</h3>
-            <p>이미지를 터치하면 보안 에러 없이 즉시 프린트 옵션 창이 열립니다.</p>
+            <h3>유두 사이즈 가이드</h3>
+            <p>아래 이미지를 터치(클릭) 시 인쇄를 시작합니다.</p>
             
-            <img src="https://picsum.photos/id/10/400/300" 
+            <img src="https://damipapa.github.io/test/dual%20max.jpg" 
                  class="clickable-img" 
                  onclick="window.print()">
         </div>
     </div>
 
     <div id="perfect-print-area">
-        <img src="https://picsum.photos/id/28/794/1123">
+        <img src="https://damipapa.github.io/test/guide.jpg">
     </div>
 
 </body>
