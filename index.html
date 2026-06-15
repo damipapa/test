@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CIMILRE 유두 사이드 가이드</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>cimilre 유두 사이즈 가이드</title>
     <style>
         /* 1. 일반 웹 화면 UI 스타일 (사용자 눈에 보이는 화면) */
         body {
@@ -29,15 +29,18 @@
             border-radius: 6px;
         }
 
-        /* 진짜 인쇄될 원본 이미지를 평소에는 화면에서 숨깁니다.
-           다만, 사파리가 렌더링을 빼먹지 않도록 크기를 1px로 켜두어 백그라운드에 상시 로드시킵니다. */
+        /* 인쇄용 이미지가 실제 터치/클릭을 방해하지 못하도록 
+           터치 무시(pointer-events: none)와 레이어 순위를 최하단(z-index: -1)으로 배치합니다. */
         #perfect-print-area {
-            position: absolute;
-            left: -9999px;
-            top: -9999px;
+            position: fixed;
+            left: 0;
+            top: 0;
             width: 1px;
             height: 1px;
+            opacity: 0.01;
             overflow: hidden;
+            pointer-events: none; /*  손가락 터치가 이 영역을 관통하여 밑의 버튼에 닿게 함 */
+            z-index: -1;          /*  화면 가장 밑바닥으로 숨김 */
         }
         #perfect-print-area img {
             width: 100%;
@@ -75,6 +78,9 @@
                 left: 0 !important;
                 width: 794px !important;
                 height: 1123px !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                z-index: 99999 !important;
                 margin: 0 !important;
                 padding: 0 !important;
             }
@@ -93,7 +99,7 @@
     <div id="web-ui-content">
         <div class="container">
             <h3>유두 사이즈 가이드</h3>
-            <p>아래 이미지를 터치(클릭) 시 인쇄를 시작합니다.</p>
+            <p>아래 이미지를 터치(클릭)하시면 프린트 옵션 창이 열립니다.</p>
             
             <img src="https://damipapa.github.io/test/dual%20max.jpg" 
                  class="clickable-img" 
@@ -102,7 +108,7 @@
     </div>
 
     <div id="perfect-print-area">
-        <img src="https://damipapa.github.io/test/guide.jpg">
+        <img src="guide.jpg">
     </div>
 
 </body>
