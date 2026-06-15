@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>cimilre 유두 사이즈 가이드</title>
-    
-    <link rel="stylesheet" href="https://printjs-401cc.kxcdn.com/print.min.css">
-    <script src="https://printjs-401cc.kxcdn.com/print.min.js"></script>
-
+    <title>실측 1:1 인쇄 오류 종결</title>
     <style>
+        /*            1. 일반 웹 화면 UI 스타일 (사용자 눈에 보이는 화면)
+           ========================================== */
         body {
             margin: 0;
             padding: 20px;
@@ -30,42 +28,85 @@
             max-width: 350px;
             border: 1px solid #ddd;
             border-radius: 6px;
-            transition: transform 0.2s;
         }
-        .clickable-img:active {
-            transform: scale(0.98);
+
+        /* 💡 핵심: 진짜 인쇄될 원본 이미지를 평소에는 화면에서 숨깁니다.
+           다만, 사파리가 렌더링을 빼먹지 않도록 크기를 1px로 켜두어 백그라운드에 상시 로드시킵니다. */
+        #perfect-print-area {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+        #perfect-print-area img {
+            width: 100%;
+            height: auto;
+        }
+
+        /* ==========================================
+           2. 🖨️ 인쇄 창이 켜지는 순간 발동하는 하드웨어 스타일
+           ========================================== */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0mm !important; /* 모바일 기기 임의 마진 절대 차단 */
+            }
+            
+            /* 모바일 사파리 인쇄 엔진이 강제 축소 규격을 잡지 못하도록 
+               BODY 전체 해상도를 A4 표준 스케일로 못 박아버립니다. */
+            html, body {
+                width: 794px !important;   /* A4 가로 표준 픽셀 */
+                height: 1123px !important; /* A4 세로 표준 픽셀 */
+                overflow: hidden !important;
+                background: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 버튼이 있던 일반 웹 화면 UI는 인쇄창에서 통째로 소멸시킵니다. */
+            #web-ui-content {
+                display: none !important;
+            }
+
+            /* 숨겨져 있던 인쇄 영역을 전면에 깨우고 A4 규격에 1:1 매칭합니다. */
+            #perfect-print-area {
+                display: block !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 794px !important;
+                height: 1123px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 이미지를 도화지 가로폭에 100% 꽉 채워 인쇄되도록 만듭니다. */
+            #perfect-print-area img {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h3>유두 사이즈 가이드</h3>
-        <p>아래 이미지를 터치(클릭)를 하시면 출력을 시작합니다.</p>
-        
-        <img src="https://damipapa.github.io/test/dual%20max.jpg" 
-             class="clickable-img" 
-             onclick="startPerfectPrint()">
+    <div id="web-ui-content">
+        <div class="container">
+            <h3>실측 가이드 도안 인쇄</h3>
+            <p>이미지를 터치하면 보안 에러 없이 즉시 프린트 옵션 창이 열립니다.</p>
+            
+            <img src="https://picsum.photos/id/10/400/300" 
+                 class="clickable-img" 
+                 onclick="window.print()">
+        </div>
     </div>
 
-    <script>
-        function startPerfectPrint() {
-            // 실제 인쇄할 고화질/실측 원본 이미지 주소
-            const realPrintImgSrc = "https://damipapa.github.io/test/guide.jpg";
-
-            // printJS 라이브러리를 실행하여 모바일 사파리 엔진에 직접 주입합니다.
-            printJS({
-                printable: realPrintImgSrc, // 인쇄할 이미지 경로
-                type: 'image',              // 타겟 타입은 이미지
-                style: '@page { size: A4 portrait; margin: 0mm; } body { margin: 0; } img { width: 100%; height: auto; }', 
-                // ↑ 여백을 0으로 만들어 모바일 축소를 방지하는 특수 CSS 주입
-                
-                documentTitle: '계측 가이드', // 문서 제목
-                showModal: true,            // 모바일에서 로딩 중일 때 인디케이터 표시
-                modalMessage: '인쇄 화면을 준비 중입니다...'
-            });
-        }
-    </script>
+    <div id="perfect-print-area">
+        <img src="https://picsum.photos/id/28/794/1123">
+    </div>
 
 </body>
 </html>
