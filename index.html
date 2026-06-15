@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>유두 사이즈 가이드</title>
-    
-    <link rel="stylesheet" href="https://printjs-401cc.kxcdn.com/print.min.css">
-    <script src="https://printjs-401cc.kxcdn.com/print.min.js"></script>
-
     <style>
         body {
             margin: 0;
@@ -27,13 +23,24 @@
         h2 { font-size: 20px; margin-bottom: 8px; color: #222; }
         p { color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.4; }
         
-        .clickable-img {
+        /* 링크 태그가 이미지 버튼처럼 보이도록 스타일링 */
+        .print-btn-link {
+            display: inline-block;
+            text-decoration: none;
             cursor: pointer;
             width: 100%;
             max-width: 380px;
+        }
+        .clickable-img {
+            width: 100%;
             height: auto;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.1s ease;
+            display: block;
+        }
+        .print-btn-link:active .clickable-img {
+            transform: scale(0.98);
         }
     </style>
 </head>
@@ -41,25 +48,12 @@
 
     <div class="container">
         <h2>유두 사이즈 가이드</h2>
-        <p>이미지를 터치하면 오차 없는 1:1 실측으로<br>즉시 프린트 미리보기 창이 열립니다.</p>
+        <p>이미지를 터치하시면 1:1 실측 인쇄 전용 페이지(PDF)가 새 창으로 열립니다.<br>열린 화면에서 바로 인쇄를 진행해 주세요.</p>
         
-        <img src="dual max.jpg" class="clickable-img" onclick="printExactPdf()">
+        <a href="guide.pdf" target="_blank" class="print-btn-link">
+            <img src="dual max.jpg" class="clickable-img">
+        </a>
     </div>
-
-    <script>
-        function printExactPdf() {
-            // 💡 [가장 중요] JPG 이미지가 아니라, 깃허브 서버에 올린 '진짜 PDF 파일 경로'를 적어줍니다.
-            const pdfFilePath = "guide.pdf"; 
-
-            // printJS가 모바일 사파리 내부에 숨겨진 원본 문서 인쇄 모듈을 직접 깨웁니다.
-            printJS({
-                printable: pdfFilePath,
-                type: 'pdf',
-                showModal: true, // 모바일에서 준비 중일 때 로딩 창 표시
-                modalMessage: '실측 인쇄 화면을 준비 중입니다...'
-            });
-        }
-    </script>
 
 </body>
 </html>
