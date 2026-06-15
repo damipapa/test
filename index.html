@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>유두 사이즈 가이드</title>
+    
+    <link rel="stylesheet" href="https://printjs-401cc.kxcdn.com/print.min.css">
+    <script src="https://printjs-401cc.kxcdn.com/print.min.js"></script>
+
     <style>
-        /* ==========================================
-           1. 일반 웹 화면 스타일 (PC & 모바일 평소 화면)
-           ========================================== */
         body {
             margin: 0;
             padding: 20px;
@@ -33,57 +34,30 @@
             height: auto;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: transform 0.1s ease;
-        }
-        .clickable-img:active {
-            transform: scale(0.98);
         }
     </style>
 </head>
 <body>
 
-    <div id="main-web-content">
-        <div class="container">
-            <h2>유두 사이즈 가이드</h2>
-            <p>이미지를 터치하면 즉시 프린트 미리보기 창이 열립니다.<br>(모바일 사파리 1:1 배율 버그 차단 완료)</p>
-            
-            <img src="dual max.jpg" class="clickable-img" onclick="triggerDirectHardwarePrint()">
-        </div>
+    <div class="container">
+        <h2>유두 사이즈 가이드</h2>
+        <p>이미지를 터치하면 오차 없는 1:1 실측으로<br>즉시 프린트 미리보기 창이 열립니다.</p>
+        
+        <img src="dual max.jpg" class="clickable-img" onclick="printExactPdf()">
     </div>
 
     <script>
-        function triggerDirectHardwarePrint() {
-            // 💡 [필수 수정] 실제 인쇄해야 하는 주황색 원형 계측 도안 JPG 이미지 경로를 넣으세요.
-            // 다른 서버 링크 주소(https://...)를 쓰면 보안 에러로 멈추니, 
-            // 반드시 깃허브 레포지토리 폴더 내부에 JPG를 같이 올린 뒤 상대경로로 입력해야 합니다.
-            const targetJpgSrc = "guide.jpg"; 
+        function printExactPdf() {
+            // 💡 [가장 중요] JPG 이미지가 아니라, 깃허브 서버에 올린 '진짜 PDF 파일 경로'를 적어줍니다.
+            const pdfFilePath = "guide.pdf"; 
 
-            // 1. 기존 웹 UI 요소들을 변수에 백업해두고 화면에서 완전히 제거합니다.
-            const webContent = document.getElementById('main-web-content');
-            const originalBodyHTML = document.body.innerHTML;
-
-            // 2. 사파리 인쇄 엔진이 여백 계산 오류를 일으키지 않도록 CSS와 BODY를 순수 이미지 한 장으로 재빌드합니다.
-            document.body.innerHTML = `
-                <div id="print-image-wrapper" style="position:absolute; top:0; left:0; width:100%; margin:0; padding:0;">
-                    <img src="${targetJpgSrc}" style="display:block; width:100%; height:auto; margin:0; padding:0;">
-                </div>
-            `;
-
-            // 인쇄 전용 강제 스타일 임시 주입
-            const style = document.createElement('style');
-            style.innerHTML = '@page { size: A4 portrait; margin: 0mm !important; } html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; }';
-            document.head.appendChild(style);
-
-            // 3. 브라우저 렌더링 스케줄러가 이미지 배치를 마칠 때까지 마이크로초 단위로 대기 후 즉시 인쇄창 호출
-            setTimeout(() => {
-                window.print();
-
-                // 4. [인쇄창이 닫힌 후] 유저가 원래 페이지를 계속 볼 수 있도록 백업해둔 기존 웹 UI로 원상복구합니다.
-                setTimeout(() => {
-                    document.body.innerHTML = originalBodyHTML;
-                    style.remove(); // 임시 스타일 제거
-                }, 500);
-            }, 150);
+            // printJS가 모바일 사파리 내부에 숨겨진 원본 문서 인쇄 모듈을 직접 깨웁니다.
+            printJS({
+                printable: pdfFilePath,
+                type: 'pdf',
+                showModal: true, // 모바일에서 준비 중일 때 로딩 창 표시
+                modalMessage: '실측 인쇄 화면을 준비 중입니다...'
+            });
         }
     </script>
 
