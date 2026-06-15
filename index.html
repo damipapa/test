@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>유두 사이즈 가이드</title>
+    <title>유두 사이즈 가이드 실측 인쇄</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         body {
             margin: 0;
             padding: 20px;
             text-align: center;
-            font-family: -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: #f8f9fa;
         }
         .container {
@@ -21,8 +24,9 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
         h2 { font-size: 20px; margin-bottom: 8px; color: #222; }
-        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.4; }
         
+        /* 화면에 보여줄 메인 이미지 버튼 */
         .clickable-img {
             cursor: pointer;
             width: 100%;
@@ -31,80 +35,88 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
+        .status-text {
+            display: none;
+            color: #007aff;
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h2>유두 사이즈 가이드</h2>
-        <p>아래 이미지를 터치(클릭)하시면 프린트 옵션 창이 열립니다.</p>
+        <p>이미지를 터치하면 실시간으로 오차 없는 1:1 PDF로 변환되어<br>즉시 프린트 미리보기 창이 열립니다.</p>
         
-        <img src="https://damipapa.github.io/test/dual%20max.jpg" 
-             class="clickable-img" 
-             onclick="openExactPrintWindow()">
+        <img src="dual max.jpg" class="clickable-img" onclick="convertJpgToPdfAndPrint()">
+             
+        <div id="status-message" class="status-text">고화질 실측 데이터를 매칭 중입니다...</div>
     </div>
 
     <script>
-        function openExactPrintWindow() {
-            // 💡 [필수 수정] 실제 인쇄해야 하는 주황색 원형 계측 도안 이미지 경로를 여기에 넣으세요.
-            // GitHub Pages 내부 폴더에 이미지를 올리고 상대 경로(예: 'images/doan.png')로 적는 것을 강력히 권장합니다.
-            const realPrintImgSrc = "guide.jpg";
+        async function convertJpgToPdfAndPrint() {
+            const status = document.getElementById('status-message');
+            status.style.display = 'block';
 
-            // 1. 모바일 사파리의 레이아웃 간섭을 피하기 위해 완전히 빈 새 창(팝업)을 엽니다.
-            const printWindow = window.open('', '_blank');
-            
-            // 2. 새 창의 문서를 순수 이미지와 인쇄 강제 CSS로만 채워 넣습니다.
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>실측 인쇄</title>
-                    <style>
-                        @page {
-                            size: A4 portrait;
-                            margin: 0mm !important; /* 프린터 물리 마진 제거 */
-                        }
-                        html, body {
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            width: 100% !important;
-                            height: 100% !important;
-                            background: #fff;
-                        }
-                        /* 💡 가로폭을 A4 실제 크기(210mm)로 강제 지정하여 모바일 뷰포트 축소를 완벽 우회 */
-                        img {
-                            display: block;
-                            width: 210mm !important;
-                            height: auto !important;
-                            margin: 0;
-                            padding: 0;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <img src="${realPrintImgSrc}" id="print-target">
-                    <script>
-                        // 이미지가 완전히 로드되면 프린트 창을 실행하고, 인쇄 종료 후 창을 닫습니다.
-                        const img = document.getElementById('print-target');
-                        if (img.complete) {
-                            run();
-                        } else {
-                            img.onload = run;
-                        }
+            // 💡 [필수 수정] 실제 인쇄해야 하는 주황색 원형 계측 도안 JPG 이미지 경로를 넣으세요.
+            // 다른 서버 링크 주소(https://...)를 쓰면 보안 에러(CORS)로 멈추니, 
+            // 반드시 깃허브 같은 본인 웹 서버 폴더에 JPG를 같이 올린 뒤 상대경로로 입력해야 합니다.
+            const targetJpgSrc = "guide.jpg"; 
 
-                        function run() {
-                            setTimeout(() => {
-                                window.focus();
-                                window.print();
-                                // 인쇄 창이 닫힌 후 유저가 다시 원래 화면으로 돌아가도록 팝업창을 닫아줍니다.
-                                setTimeout(() => { window.close(); }, 500);
-                            }, 300);
-                        }
-                    <\/script>
-                </body>
-                </html>
-            `);
-            
-            printWindow.document.close();
+            try {
+                const { jsPDF } = window.jspdf;
+                
+                // 1. 원본 이미지를 백그라운드에서 로드하여 규격을 확인합니다.
+                const img = new Image();
+                img.src = targetJpgSrc;
+                
+                img.onload = function() {
+                    // 2. 물리 규격 가로 210mm, 세로 297mm짜리 완전한 A4 PDF 가상 도화지 생성
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    
+                    // 3. 생성한 A4 도화지 정밀 좌표 (0, 0) 위치에 이미지를 가로 210mm, 세로 297mm로 꽉 차게 드로잉
+                    pdf.addImage(img, 'JPEG', 0, 0, 210, 297);
+                    
+                    // 4. 조립된 가상 PDF를 브라우저가 다이렉트로 읽을 수 있는 가상 파일 객체(Blob)로 변환
+                    const pdfBlob = pdf.output('blob');
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                    // 5. 모바일 사파리 인쇄 버그를 우회하기 위해 투명 iframe을 생성해 주입
+                    const oldFrame = document.getElementById('hidden-pdf-frame');
+                    if (oldFrame) oldFrame.remove();
+
+                    const iframe = document.createElement('iframe');
+                    iframe.id = 'hidden-pdf-frame';
+                    iframe.style.position = 'fixed';
+                    iframe.style.width = '0';
+                    iframe.style.height = '0';
+                    iframe.style.border = '0';
+                    iframe.src = pdfUrl;
+                    
+                    document.body.appendChild(iframe);
+
+                    // 6. iframe에 PDF 데이터 주입이 완료되는 즉시 시스템 인쇄(AirPrint) 실행
+                    iframe.onload = function() {
+                        setTimeout(() => {
+                            iframe.contentWindow.focus();
+                            iframe.contentWindow.print();
+                            status.style.display = 'none';
+                        }, 350);
+                    };
+                };
+
+                img.onerror = function() {
+                    status.style.display = 'none';
+                    alert("이미지를 불러오지 못했습니다. 경로와 보안 설정을 확인해 주세요.");
+                };
+
+            } catch (error) {
+                console.error(error);
+                status.style.display = 'none';
+                alert("인쇄 데이터를 생성하는 도중 오류가 발생했습니다.");
+            }
         }
     </script>
 
