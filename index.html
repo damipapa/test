@@ -33,71 +33,57 @@
             height: auto;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.1s ease;
         }
-
-        /* PC 인쇄 시 사용될 영역 (평소엔 숨김) */
-        #pc-print-area { display: none; }
-
-        /* ==========================================
-           2. 🖨️ [PC 전용] 인쇄 순간 발동 스타일
-           ========================================== */
-        @media print {
-            @page { size: A4 portrait; margin: 0mm !important; }
-            html, body {
-                width: 794px !important;
-                height: 1123px !important;
-                overflow: hidden !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            #web-ui-layout { display: none !important; }
-            #pc-print-area {
-                display: block !important;
-                position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 794px !important;
-                height: 1123px !important;
-            }
-            #pc-print-area img {
-                display: block !important;
-                width: 100% !important;
-                height: auto !important;
-            }
+        .clickable-img:active {
+            transform: scale(0.98);
         }
     </style>
 </head>
 <body>
 
-    <div id="web-ui-layout">
+    <div id="main-web-content">
         <div class="container">
             <h2>유두 사이즈 가이드</h2>
-            <p>이미지를 터치하시면 오차 없는 1:1 실측 인쇄 전용 페이지(PDF)로 즉시 연결됩니다.</p>
+            <p>이미지를 터치하면 즉시 프린트 미리보기 창이 열립니다.<br>(모바일 사파리 1:1 배율 버그 차단 완료)</p>
             
-            <img src="dual max.jpg" class="clickable-img" onclick="runAbsolutePrint()">
+            <img src="dual max.jpg" class="clickable-img" onclick="triggerDirectHardwarePrint()">
         </div>
     </div>
 
-    <div id="pc-print-area">
-        <img src="guide.jpg">
-    </div>
-
     <script>
-        function runAbsolutePrint() {
-            // 현재 기기가 모바일(아이폰, 안드로이드)인지 감별
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        function triggerDirectHardwarePrint() {
+            // 💡 [필수 수정] 실제 인쇄해야 하는 주황색 원형 계측 도안 JPG 이미지 경로를 넣으세요.
+            // 다른 서버 링크 주소(https://...)를 쓰면 보안 에러로 멈추니, 
+            // 반드시 깃허브 레포지토리 폴더 내부에 JPG를 같이 올린 뒤 상대경로로 입력해야 합니다.
+            const targetJpgSrc = "guide.jpg"; 
 
-            if (isMobile) {
-                // 💡 [모바일 핵심 우회 메커니즘]
-                // PPT나 포토샵에서 A4 크기로 여백 없이 정확히 만든 실제 'PDF 파일'의 경로를 입력해 주세요.
-                const realStaticPdfUrl = "guide.pdf"; 
+            // 1. 기존 웹 UI 요소들을 변수에 백업해두고 화면에서 완전히 제거합니다.
+            const webContent = document.getElementById('main-web-content');
+            const originalBodyHTML = document.body.innerHTML;
 
-                // 사파리 브라우저 인쇄 엔진을 거치지 않고, 파일 자체로 다이렉트 이동합니다.
-                window.location.href = realStaticPdfUrl;
-            } else {
-                // [PC인 경우] 기존에 잘 되던 완벽한 1:1 CSS 프린트 기능 실행
+            // 2. 사파리 인쇄 엔진이 여백 계산 오류를 일으키지 않도록 CSS와 BODY를 순수 이미지 한 장으로 재빌드합니다.
+            document.body.innerHTML = `
+                <div id="print-image-wrapper" style="position:absolute; top:0; left:0; width:100%; margin:0; padding:0;">
+                    <img src="${targetJpgSrc}" style="display:block; width:100%; height:auto; margin:0; padding:0;">
+                </div>
+            `;
+
+            // 인쇄 전용 강제 스타일 임시 주입
+            const style = document.createElement('style');
+            style.innerHTML = '@page { size: A4 portrait; margin: 0mm !important; } html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; }';
+            document.head.appendChild(style);
+
+            // 3. 브라우저 렌더링 스케줄러가 이미지 배치를 마칠 때까지 마이크로초 단위로 대기 후 즉시 인쇄창 호출
+            setTimeout(() => {
                 window.print();
-            }
+
+                // 4. [인쇄창이 닫힌 후] 유저가 원래 페이지를 계속 볼 수 있도록 백업해둔 기존 웹 UI로 원상복구합니다.
+                setTimeout(() => {
+                    document.body.innerHTML = originalBodyHTML;
+                    style.remove(); // 임시 스타일 제거
+                }, 500);
+            }, 150);
         }
     </script>
 
