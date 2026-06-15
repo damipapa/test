@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>cimilre 유두 사이즈 가이드</title>
+    <title>유두 사이즈 가이드</title>
     <style>
-        /* ==========================================
-           1. 일반 웹 화면 스타일 (PC & 모바일 평소 화면)
-           ========================================== */
         body {
             margin: 0;
             padding: 20px;
             text-align: center;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, sans-serif;
             background-color: #f8f9fa;
         }
         .container {
@@ -24,9 +21,8 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
         h2 { font-size: 20px; margin-bottom: 8px; color: #222; }
-        p { color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.4; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
         
-        /* 화면에 보여줄 예쁜 메인 이미지 버튼 */
         .clickable-img {
             cursor: pointer;
             width: 100%;
@@ -34,93 +30,83 @@
             height: auto;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: transform 0.1s ease;
-        }
-        .clickable-img:active {
-            transform: scale(0.98);
-        }
-
-        /* 인쇄될 원본 도안은 평소에 화면을 가리거나 터치를 방해하지 않도록 
-           맨 밑바닥 투명 레이어로 숨겨서 브라우저가 미리 다운로드만 받게 만듭니다. */
-        #exact-print-area {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 1px;
-            height: 1px;
-            opacity: 0.001;
-            overflow: hidden;
-            pointer-events: none; /* 손가락 터치가 이 영역을 관통하게 함 */
-            z-index: -9999;       /* 최하단 배치 */
-        }
-        #exact-print-area img {
-            width: 100%;
-            height: auto;
-        }
-
-        /* 2. 프린트 인쇄 버튼을 누르는 순간 발동하는 하드웨어 스타일 */
-        @media print {
-            @page {
-                size: A4 portrait;
-                margin: 0mm !important; /* 모바일 시스템의 임의 여백 강제 파괴 */
-            }
-            
-            /* 모바일 사파리 엔진이 자기 맘대로 화면을 축소하지 못하도록 
-               BODY 전체 해상도를 A4 표준 스케일로 못 박아버립니다. */
-            html, body {
-                width: 794px !important;   /* A4 가로 표준 픽셀 */
-                height: 1123px !important; /* A4 세로 표준 픽셀 */
-                overflow: hidden !important;
-                background: #fff !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            /* 기존의 웹 화면 UI(모델 사진, 설명 글씨 등)는 인쇄창에서 완벽히 소멸시킵니다. */
-            #web-ui-layout {
-                display: none !important;
-            }
-
-            /* 숨겨져 있던 실측 도안 영역을 전면에 깨우고 A4 규격에 1:1로 매칭합니다. */
-            #exact-print-area {
-                display: block !important;
-                position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 794px !important;
-                height: 1123px !important;
-                opacity: 1 !important;
-                pointer-events: auto !important;
-                z-index: 99999 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            /* 도안 이미지를 A4 용지 너비에 꽉 차게 강제 고정합니다. */
-            #exact-print-area img {
-                display: block !important;
-                width: 100% !important;
-                height: auto !important;
-            }
         }
     </style>
 </head>
 <body>
 
-    <div id="web-ui-layout">
-        <div class="container">
-            <h2>유두 사이즈 가이드</h2>
-            <p>이미지를 터치하면 즉시 프린트 옵션 창이 열립니다.</p>
-            
-            <img src="dual max/jpg" 
-                 class="clickable-img" 
-                 onclick="window.print()">
-        </div>
+    <div class="container">
+        <h2>유두 사이즈 가이드</h2>
+        <p>아래 이미지를 터치(클릭)하시면 프린트 옵션 창이 열립니다.</p>
+        
+        <img src="https://damipapa.github.io/test/dual%20max.jpg" 
+             class="clickable-img" 
+             onclick="openExactPrintWindow()">
     </div>
 
-    <div id="exact-print-area">
-        <img src="guide.jpg">
-    </div>
+    <script>
+        function openExactPrintWindow() {
+            // 💡 [필수 수정] 실제 인쇄해야 하는 주황색 원형 계측 도안 이미지 경로를 여기에 넣으세요.
+            // GitHub Pages 내부 폴더에 이미지를 올리고 상대 경로(예: 'images/doan.png')로 적는 것을 강력히 권장합니다.
+            const realPrintImgSrc = "guide.jpg";
+
+            // 1. 모바일 사파리의 레이아웃 간섭을 피하기 위해 완전히 빈 새 창(팝업)을 엽니다.
+            const printWindow = window.open('', '_blank');
+            
+            // 2. 새 창의 문서를 순수 이미지와 인쇄 강제 CSS로만 채워 넣습니다.
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>실측 인쇄</title>
+                    <style>
+                        @page {
+                            size: A4 portrait;
+                            margin: 0mm !important; /* 프린터 물리 마진 제거 */
+                        }
+                        html, body {
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            width: 100% !important;
+                            height: 100% !important;
+                            background: #fff;
+                        }
+                        /* 💡 가로폭을 A4 실제 크기(210mm)로 강제 지정하여 모바일 뷰포트 축소를 완벽 우회 */
+                        img {
+                            display: block;
+                            width: 210mm !important;
+                            height: auto !important;
+                            margin: 0;
+                            padding: 0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <img src="${realPrintImgSrc}" id="print-target">
+                    <script>
+                        // 이미지가 완전히 로드되면 프린트 창을 실행하고, 인쇄 종료 후 창을 닫습니다.
+                        const img = document.getElementById('print-target');
+                        if (img.complete) {
+                            run();
+                        } else {
+                            img.onload = run;
+                        }
+
+                        function run() {
+                            setTimeout(() => {
+                                window.focus();
+                                window.print();
+                                // 인쇄 창이 닫힌 후 유저가 다시 원래 화면으로 돌아가도록 팝업창을 닫아줍니다.
+                                setTimeout(() => { window.close(); }, 500);
+                            }, 300);
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+        }
+    </script>
 
 </body>
 </html>
