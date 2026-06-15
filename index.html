@@ -2,10 +2,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>cimilre 유두 사이즈 가이드</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
-        /* 1. 일반 웹 화면 UI 스타일 (사용자 눈에 보이는 화면) */
         body {
             margin: 0;
             padding: 20px;
@@ -27,89 +29,95 @@
             max-width: 350px;
             border: 1px solid #ddd;
             border-radius: 6px;
+            transition: transform 0.2s;
         }
-
-        /* 인쇄용 이미지가 실제 터치/클릭을 방해하지 못하도록 
-           터치 무시(pointer-events: none)와 레이어 순위를 최하단(z-index: -1)으로 배치합니다. */
-        #perfect-print-area {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 1px;
-            height: 1px;
-            opacity: 0.01;
-            overflow: hidden;
-            pointer-events: none; /*  손가락 터치가 이 영역을 관통하여 밑의 버튼에 닿게 함 */
-            z-index: -1;          /*  화면 가장 밑바닥으로 숨김 */
+        .clickable-img:active {
+            transform: scale(0.98);
         }
-        #perfect-print-area img {
-            width: 100%;
-            height: auto;
-        }
-
-        /* 2. 프린트 인쇄 창이 켜지는 순간 발동하는 하드웨어 스타일 */
-        @media print {
-            @page {
-                size: A4 portrait;
-                margin: 0mm !important; /* 모바일 기기 임의 마진 절대 차단 */
-            }
-            
-            /* 모바일 사파리 인쇄 엔진이 강제 축소 규격을 잡지 못하도록 
-               BODY 전체 해상도를 A4 표준 스케일로 못 박아버립니다. */
-            html, body {
-                width: 794px !important;   /* A4 가로 표준 픽셀 */
-                height: 1123px !important; /* A4 세로 표준 픽셀 */
-                overflow: hidden !important;
-                background: #fff !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            /* 버튼이 있던 일반 웹 화면 UI는 인쇄창에서 통째로 소멸시킵니다. */
-            #web-ui-content {
-                display: none !important;
-            }
-
-            /* 숨겨져 있던 인쇄 영역을 전면에 깨우고 A4 규격에 1:1 매칭합니다. */
-            #perfect-print-area {
-                display: block !important;
-                position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 794px !important;
-                height: 1123px !important;
-                opacity: 1 !important;
-                pointer-events: auto !important;
-                z-index: 99999 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            /* 이미지를 도화지 가로폭에 100% 꽉 채워 인쇄되도록 만듭니다. */
-            #perfect-print-area img {
-                display: block !important;
-                width: 100% !important;
-                height: auto !important;
-            }
+        .status-text {
+            display: none;
+            color: #007aff;
+            font-weight: bold;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
 
-    <div id="web-ui-content">
-        <div class="container">
-            <h3>유두 사이즈 가이드</h3>
-            <p>아래 이미지를 터치(클릭)하시면 프린트 옵션 창이 열립니다.</p>
-            
-            <img src="https://damipapa.github.io/test/dual%20max.jpg" 
-                 class="clickable-img" 
-                 onclick="window.print()">
-        </div>
+    <div class="container">
+        <h3>유두 사이즈 가이드</h3>
+        <p>이미지를 터치(클릭)하면 프린트 옵션 창이 열립니다.</p>
+        
+        <img src="https://damipapa.github.io/test/dual%20max.jpg" 
+             class="clickable-img" 
+             onclick="generateExactPdfPrint()">
+             
+        <div id="status" class="status-text">실측 데이터를 매칭 중입니다...</div>
     </div>
 
-    <div id="perfect-print-area">
-        <img src="guide.jpg">
-    </div>
+    <script>
+        async function generateExactPdfPrint() {
+            const statusText = document.getElementById('status');
+            statusText.style.display = 'block';
+
+            // 실제 인쇄할 원본 계측 가이드 이미지 경로를 적어주세요.
+            // CORS 보안 문제를 피하기 위해 내 웹 서버에 올린 상대경로(예: 'img/guide.png')를 강력 권장합니다.
+            const originImgSrc = "guide.jpg"; 
+
+            try {
+                const { jsPDF } = window.jspdf;
+                
+                // 1. 인쇄 이미지를 불러와 물리적인 픽셀 크기를 계산합니다.
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; // CORS 우회 시도
+                img.src = originImgSrc;
+                
+                img.onload = function() {
+                    // 2. 가로 210mm, 세로 297mm의 정확한 물리적 A4 도화지를 생성합니다.
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    
+                    // 3. 도화지 여백을 0으로 꽉 차게 이미지를 드로잉합니다.
+                    pdf.addImage(img, 'PNG', 0, 0, 210, 297);
+                    
+                    // 4. 가상 PDF 데이터를 바이너리 데이터(Blob)로 변환합니다.
+                    const pdfBlob = pdf.output('blob');
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                    // 5. 숨겨진 iframe을 만들어 모바일 사파리 인쇄 엔진에 다이렉트 주입
+                    const oldFrame = document.getElementById('exact-pdf-frame');
+                    if (oldFrame) oldFrame.remove();
+
+                    const iframe = document.createElement('iframe');
+                    iframe.id = 'exact-pdf-frame';
+                    iframe.style.position = 'fixed';
+                    iframe.style.width = '0';
+                    iframe.style.height = '0';
+                    iframe.style.border = '0';
+                    iframe.src = pdfUrl;
+                    
+                    document.body.appendChild(iframe);
+
+                    // 6. 인쇄 엔진이 로드되면 프린트 팝업 즉시 실행
+                    iframe.onload = function() {
+                        setTimeout(() => {
+                            iframe.contentWindow.focus();
+                            iframe.contentWindow.print();
+                            statusText.style.display = 'none';
+                        }, 350);
+                    };
+                };
+
+                img.onerror = function() {
+                    throw new Error("이미지 로드 실패");
+                };
+
+            } catch (error) {
+                console.error(error);
+                statusText.style.display = 'none';
+                alert("인쇄 도중 보안 에러가 발생했습니다. 인쇄용 이미지를 외부 링크가 아닌 본인 웹 서버 폴더에 업로드한 뒤 상대 경로로 지정해 주세요.");
+            }
+        }
+    </script>
 
 </body>
 </html>
