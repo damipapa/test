@@ -33,58 +33,58 @@
             height: auto;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: transform 0.1s ease;
-        }
-        .clickable-img:active {
-            transform: scale(0.98);
         }
 
-        /* 💡 핵심: 인쇄용 원본 도안은 평소 웹 화면이나 유저의 터치를 방해하지 않도록 완전 숨김 */
-        #real-print-layout {
+        /* 평소 웹 화면에서는 인쇄 도안 영역을 완전히 숨김 */
+        #exact-hardware-print {
             display: none;
         }
 
         /* ==========================================
-           2. 🖨️ [하드웨어 연동] 인쇄 버튼을 누르는 순간 발동하는 스타일
+           2. 🖨️ [사파리 축소 우회] 인쇄 순간 발동 스타일
            ========================================== */
         @media print {
             @page {
                 size: A4 portrait;
-                margin: 0mm !important; /* 모바일 기기 임의 여백 강제 파괴 */
+                margin: 0mm !important; /* 브라우저 마진 강제 파괴 */
             }
             
-            /* 사파리/크롬 엔진이 화면을 자기 마음대로 축소하지 못하도록 A4 해상도로 못 박음 */
+            /* 💡 핵심: 사파리가 뷰포트를 계산하여 축소하지 못하도록 
+               HTML과 BODY의 크기 자체를 물리적 mm 단위로 묶어버립니다. */
             html, body {
-                width: 794px !important;   /* A4 가로 표준 픽셀 */
-                height: 1123px !important; /* A4 세로 표준 픽셀 */
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0mm !important;
+                padding: 0mm !important;
                 overflow: hidden !important;
                 background: #fff !important;
-                margin: 0 !important;
-                padding: 0 !important;
             }
 
-            /* 버튼이 있던 기존 일반 웹 화면 UI(모델 사진, 설명 글 등)는 인쇄창에서 통째로 소멸 */
+            /* 기존 일반 웹 화면 요소 소멸 */
             #web-ui-layout {
                 display: none !important;
             }
 
-            /* 숨겨져 있던 실측 도안 영역을 전면에 깨우고 A4 도화지에 1:1 매칭 */
-            #real-print-layout {
+            /* 숨겨진 인쇄 영역을 깨우고 정확히 A4 물리 규격으로 잠금 */
+            #exact-hardware-print {
                 display: block !important;
                 position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 794px !important;
-                height: 1123px !important;
-                margin: 0 !important;
-                padding: 0 !important;
+                top: 0mm !important;
+                left: 0mm !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0mm !important;
+                padding: 0mm !important;
+                box-sizing: border-box !important;
             }
 
-            /* 도안 이미지를 A4 용지 가로폭에 100% 꽉 채워 꽂아 넣음 */
-            #real-print-layout img {
+            /* 도안 이미지를 A4 가로폭(210mm)에 한 치의 오차도 없이 1:1 대응 */
+            #exact-hardware-print img {
                 display: block !important;
-                width: 100% !important;
-                height: auto !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0mm !important;
+                padding: 0mm !important;
             }
         }
     </style>
@@ -94,13 +94,13 @@
     <div id="web-ui-layout">
         <div class="container">
             <h2>유두 사이즈 가이드</h2>
-            <p>이미지를 터치하시면 즉시 프린트 옵션 창이 열립니다.<br>(PC / 모바일 다이렉트 연동 완료)</p>
+            <p>이미지를 터치하시면 별도의 설정 없이<br>즉시 오차 없는 1:1 실측 인쇄 창이 열립니다.</p>
             
             <img src="dual max.jpg" class="clickable-img" onclick="window.print()">
         </div>
     </div>
 
-    <div id="real-print-layout">
+    <div id="exact-hardware-print">
         <img src="guide.jpg">
     </div>
 
