@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>유두 사이즈 가이드 실측 인쇄</title>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+    <title>유두 사이즈 가이드</title>
     <style>
+        /* ==========================================
+           1. 일반 웹 화면 스타일 (PC & 모바일 평소 화면)
+           ========================================== */
         body {
             margin: 0;
             padding: 20px;
@@ -26,7 +26,6 @@
         h2 { font-size: 20px; margin-bottom: 8px; color: #222; }
         p { color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.4; }
         
-        /* 화면에 보여줄 메인 이미지 버튼 */
         .clickable-img {
             cursor: pointer;
             width: 100%;
@@ -35,87 +34,98 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-        .status-text {
+
+        /* PC 인쇄 시 사용될 영역 (평소엔 숨김) */
+        #pc-print-area {
             display: none;
-            color: #007aff;
-            font-weight: bold;
-            margin-top: 15px;
-            font-size: 14px;
+        }
+
+        /* ==========================================
+           2. 🖨️ [PC 전용] 인쇄 순간 발동 스타일
+           ========================================== */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0mm !important;
+            }
+            html, body {
+                width: 794px !important;
+                height: 1123px !important;
+                overflow: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            #web-ui-layout {
+                display: none !important;
+            }
+            #pc-print-area {
+                display: block !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 794px !important;
+                height: 1123px !important;
+            }
+            #pc-print-area img {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>유두 사이즈 가이드</h2>
-        <p>이미지를 터치하면 실시간으로 오차 없는 1:1 PDF로 변환되어<br>즉시 프린트 미리보기 창이 열립니다.</p>
-        
-        <img src="dual max.jpg" class="clickable-img" onclick="convertJpgToPdfAndPrint()">
-             
-        <div id="status-message" class="status-text">고화질 실측 데이터를 매칭 중입니다...</div>
+    <div id="web-ui-layout">
+        <div class="container">
+            <h2>유두 사이즈 가이드</h2>
+            <p>이미지를 터치하면 정밀 인쇄 모듈이 작동하여<br>PC와 모바일 모두 실측 1:1 사이즈로 즉시 인쇄됩니다.</p>
+            
+            <img src="dual max.jpg" class="clickable-img" onclick="runMasterPrint()">
+        </div>
+    </div>
+
+    <div id="pc-print-area">
+        <img src="guide.jpg">
     </div>
 
     <script>
-        async function convertJpgToPdfAndPrint() {
-            const status = document.getElementById('status-message');
-            status.style.display = 'block';
+        function runMasterPrint() {
+            // 1. 현재 접속한 기기가 모바일(아이폰, 안드로이드)인지 확인합니다.
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-            // 💡 [필수 수정] 실제 인쇄해야 하는 주황색 원형 계측 도안 JPG 이미지 경로를 넣으세요.
-            // 다른 서버 링크 주소(https://...)를 쓰면 보안 에러(CORS)로 멈추니, 
-            // 반드시 깃허브 같은 본인 웹 서버 폴더에 JPG를 같이 올린 뒤 상대경로로 입력해야 합니다.
-            const targetJpgSrc = "guide.jpg"; 
+            if (isMobile) {
+                // 2. [모바일인 경우 버그 우회 완벽 차단]
+                // 💡 [필수!] 포토샵/PPT 등에서 A4 크기로 여백 없이 저장한 진짜 '정적 PDF 파일'의 경로를 적어줍니다.
+                const realStaticPdfUrl = "guide.pdf"; 
 
-            try {
-                const { jsPDF } = window.jspdf;
+                // 숨겨진 iframe을 클린하게 새로 생성하여 정적 PDF를 다이렉트로 바인딩합니다.
+                const oldFrame = document.getElementById('master-print-frame');
+                if (oldFrame) oldFrame.remove();
+
+                const iframe = document.createElement('iframe');
+                iframe.id = 'master-print-frame';
+                iframe.style.position = 'fixed';
+                iframe.style.top = '0';
+                iframe.style.left = '0';
+                iframe.style.width = '1px';
+                iframe.style.height = '1px';
+                iframe.style.opacity = '0.01';
+                iframe.style.border = '0';
                 
-                // 1. 원본 이미지를 백그라운드에서 로드하여 규격을 확인합니다.
-                const img = new Image();
-                img.src = targetJpgSrc;
-                
-                img.onload = function() {
-                    // 2. 물리 규격 가로 210mm, 세로 297mm짜리 완전한 A4 PDF 가상 도화지 생성
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    
-                    // 3. 생성한 A4 도화지 정밀 좌표 (0, 0) 위치에 이미지를 가로 210mm, 세로 297mm로 꽉 차게 드로잉
-                    pdf.addImage(img, 'JPEG', 0, 0, 210, 297);
-                    
-                    // 4. 조립된 가상 PDF를 브라우저가 다이렉트로 읽을 수 있는 가상 파일 객체(Blob)로 변환
-                    const pdfBlob = pdf.output('blob');
-                    const pdfUrl = URL.createObjectURL(pdfBlob);
+                // 모바일 사파리가 원본 파일을 그대로 인식하도록 파일 경로 주입
+                iframe.src = realStaticPdfUrl;
+                document.body.appendChild(iframe);
 
-                    // 5. 모바일 사파리 인쇄 버그를 우회하기 위해 투명 iframe을 생성해 주입
-                    const oldFrame = document.getElementById('hidden-pdf-frame');
-                    if (oldFrame) oldFrame.remove();
-
-                    const iframe = document.createElement('iframe');
-                    iframe.id = 'hidden-pdf-frame';
-                    iframe.style.position = 'fixed';
-                    iframe.style.width = '0';
-                    iframe.style.height = '0';
-                    iframe.style.border = '0';
-                    iframe.src = pdfUrl;
-                    
-                    document.body.appendChild(iframe);
-
-                    // 6. iframe에 PDF 데이터 주입이 완료되는 즉시 시스템 인쇄(AirPrint) 실행
-                    iframe.onload = function() {
-                        setTimeout(() => {
-                            iframe.contentWindow.focus();
-                            iframe.contentWindow.print();
-                            status.style.display = 'none';
-                        }, 350);
-                    };
+                iframe.onload = function() {
+                    setTimeout(() => {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                    }, 300);
                 };
-
-                img.onerror = function() {
-                    status.style.display = 'none';
-                    alert("이미지를 불러오지 못했습니다. 경로와 보안 설정을 확인해 주세요.");
-                };
-
-            } catch (error) {
-                console.error(error);
-                status.style.display = 'none';
-                alert("인쇄 데이터를 생성하는 도중 오류가 발생했습니다.");
+            } else {
+                // 3. [PC인 경우] 기존에 잘 작동하던 고유의 1:1 CSS 프린트 기능을 그대로 실행합니다.
+                window.print();
             }
         }
     </script>
